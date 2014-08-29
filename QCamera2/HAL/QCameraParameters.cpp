@@ -3731,6 +3731,10 @@ int32_t QCameraParameters::setRecordingHint(const QCameraParameters& params)
             if(value != NAME_NOT_FOUND){
                 updateParamEntry(KEY_RECORDING_HINT, str);
                 setRecordingHintValue(value);
+                if (m_bDISEnabled) {
+                    ALOGE("%s: %d: Setting DIS value again", __func__, __LINE__);
+                    setDISValue(VALUE_ENABLE);
+                }
                 return NO_ERROR;
             } else {
                 ALOGE("Invalid recording hint value: %s", str);
@@ -8752,6 +8756,11 @@ int32_t QCameraParameters::updateRecordingHintValue(int32_t value)
     if (rc != NO_ERROR) {
         ALOGE("%s:Failed to update table", __func__);
         return rc;
+    }
+
+    if(m_bDISEnabled && (value==1)) {
+        ALOGE("%s: %d: Setting DIS value again!!", __func__, __LINE__);
+        setDISValue(VALUE_ENABLE);
     }
 
     rc = commitSetBatch();
