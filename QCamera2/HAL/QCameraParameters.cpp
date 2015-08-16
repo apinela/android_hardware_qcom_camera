@@ -4944,8 +4944,9 @@ static cam_dimension_t new_prvw_sizes_cam0[CAM0_PRVW_TBL_SIZE] = {
     {320, 240}
 };
 
-#define CAM1_VID_TBL_SIZE 10
+#define CAM1_VID_TBL_SIZE 11
 static cam_dimension_t new_vid_sizes_cam1[CAM1_VID_TBL_SIZE] = {
+    {2560, 1440},
     {1920, 1080},
     {1280, 720},
     {864, 480},
