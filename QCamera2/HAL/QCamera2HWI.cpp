@@ -761,6 +761,10 @@ char* QCamera2HardwareInterface::get_parameters(struct camera_device *device)
     int32_t rc = hw->processAPI(QCAMERA_SM_EVT_GET_PARAMS, NULL);
     if (rc == NO_ERROR) {
         hw->waitAPIResult(QCAMERA_SM_EVT_GET_PARAMS, &apiResult);
+
+        // Set exposure-time-values param for CameraNext slow-shutter
+        params.set("exposure-time-values", "0");
+
         ret = apiResult.params;
     }
     hw->unlockAPI();
