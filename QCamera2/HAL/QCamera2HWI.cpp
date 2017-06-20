@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2016, The Linux Foundataion. All rights reserved.
+/* Copyright (c) 2012-2017, The Linux Foundataion. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
@@ -37,7 +37,7 @@
 #include <utils/Errors.h>
 #include <utils/Trace.h>
 #include "gralloc_priv.h"
-#include "native_handle.h"
+#include <cutils/native_handle.h>
 
 #include <binder/Parcel.h>
 #include <binder/IServiceManager.h>
@@ -46,6 +46,8 @@
 
 #include "QCamera2HWI.h"
 #include "QCameraMem.h"
+#include <glib.h>
+#include <glibconfig.h>
 
 #define MAP_TO_DRIVER_COORDINATE(val, base, scale, offset) \
   ((int32_t)val * (int32_t)scale / (int32_t)base + (int32_t)offset)

@@ -36,7 +36,7 @@
 #include <utils/Errors.h>
 #include <utils/Trace.h>
 #include <gralloc_priv.h>
-#include <QComOMXMetadata.h>
+#include <libstagefrighthw/QComOMXMetadata.h>
 #include <qdMetaData.h>
 
 #include "QCamera2HWI.h"
@@ -48,7 +48,7 @@
 #include <media/hardware/HardwareAPI.h>
 typedef struct VideoNativeHandleMetadata media_metadata_buffer;
 #else
-#include "QComOMXMetadata.h"
+#include <libstagefrighthw/QComOMXMetadata.h>
 typedef struct encoder_media_buffer_type media_metadata_buffer;
 #endif
 
@@ -1057,7 +1057,6 @@ camera_memory_t *QCameraStreamMemory::getMemory(uint32_t index,
     return mCameraMemory[index];
 }
 
-#ifdef USE_MEDIA_EXTENSIONS
 /*===========================================================================
 * FUNCTION   : getNativeHandle
 
@@ -1072,10 +1071,14 @@ camera_memory_t *QCameraStreamMemory::getMemory(uint32_t index,
 *==========================================================================*/
 native_handle_t *QCameraVideoMemory::getNativeHandle(uint32_t index, bool metadata)
 {
+#ifdef USE_MEDIA_EXTENSIONS
     if (index >= mMetaBufCount || (!metadata && index >= mBufferCount)) {
         return NULL;
     }
     return mNativeHandle[index];
+#else
+    return NULL;
+#endif
 }
 
 /*===========================================================================
@@ -1094,7 +1097,7 @@ int QCameraVideoMemory::closeNativeHandle(const void *data, bool metadata)
 {
     int32_t rc = NO_ERROR;
     int32_t index = -1;
-
+#ifdef USE_MEDIA_EXTENSIONS
     if (metadata) {
         const media_metadata_buffer * packet = (const media_metadata_buffer*)data;
         if (packet != NULL && packet->eType ==
@@ -1116,6 +1119,7 @@ int QCameraVideoMemory::closeNativeHandle(const void *data, bool metadata)
     } else {
         ALOGW("Warning: Not of type video meta buffer");
     }
+#endif
     return rc;
 }
 
@@ -1134,7 +1138,7 @@ int QCameraVideoMemory::closeNativeHandle(const void *data, bool metadata)
 int QCameraVideoMemory::closeNativeHandle(const void *data)
 {
     int32_t rc = NO_ERROR;
-
+#ifdef USE_MEDIA_EXTENSIONS
     const media_metadata_buffer *packet =
             (const media_metadata_buffer *)data;
     if ((packet != NULL) && (packet->eType ==
@@ -1146,9 +1150,9 @@ int QCameraVideoMemory::closeNativeHandle(const void *data)
        ALOGE("Invalid Data. Could not release");
         return BAD_VALUE;
     }
+#endif
    return rc;
 }
-#endif
 
 /*===========================================================================
  * FUNCTION   : getMatchBufIndex
