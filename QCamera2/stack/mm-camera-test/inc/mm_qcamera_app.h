@@ -1,4 +1,5 @@
-/* Copyright (c) 2012, 2014-2015, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012, 2014-2015, 2017, The Linux Foundation. All rights
+ * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -235,6 +236,7 @@ typedef struct {
     int zsl_enabled;
     int8_t focus_supported;
     cam_stream_user_cb user_preview_cb;
+    cam_stream_user_cb user_rdi_cb;
     cam_stream_user_cb user_metadata_cb;
     parm_buffer_new_t *params_buffer;
     USER_INPUT_DISPLAY_T preview_resolution;
