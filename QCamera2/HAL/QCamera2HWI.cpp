@@ -56,6 +56,7 @@
 #define CAMERA_MIN_JPEG_ENCODING_BUFFERS 2
 #define CAMERA_MIN_VIDEO_BUFFERS         9
 #define CAMERA_ISP_PING_PONG_BUFFERS     2
+#define EXTRA_RAW_PREVIEW_STREAM_BUF     5
 
 #define HDR_CONFIDENCE_THRESHOLD 0.4
 
@@ -1003,6 +1004,7 @@ QCamera2HardwareInterface::QCamera2HardwareInterface(uint32_t cameraId)
       m_bShutterSoundPlayed(false),
       m_bPreviewStarted(false),
       m_bRecordStarted(false),
+      mRawPreviewEnabled(false),
       m_pPowerModule(NULL),
       mDumpFrmCnt(0U),
       mDumpSkipCnt(0U),
@@ -1659,7 +1661,9 @@ uint8_t QCamera2HardwareInterface::getBufNumRequired(cam_stream_type_t stream_ty
                 //ISP allocates native buffers in YUV case
                 bufferCnt -= CAMERA_ISP_PING_PONG_BUFFERS;
             }
-
+        } else if (mRawPreviewEnabled) {
+            bufferCnt = CAMERA_MIN_STREAMING_BUFFERS
+                        + EXTRA_RAW_PREVIEW_STREAM_BUF;
         } else {
             bufferCnt = minCaptureBuffers +
                         mParameters.getNumOfExtraHDRInBufsIfNeeded() -
@@ -1924,7 +1928,7 @@ QCameraHeapMemory *QCamera2HardwareInterface::allocateStreamInfoBuf(
     case CAM_STREAM_TYPE_SNAPSHOT:
     case CAM_STREAM_TYPE_RAW:
         if ((mParameters.isZSLMode() && mParameters.getRecordingHintValue() != true) ||
-                 mLongshotEnabled) {
+                 mLongshotEnabled || mRawPreviewEnabled) {
             streamInfo->streaming_mode = CAM_STREAMING_MODE_CONTINUOUS;
         } else {
             streamInfo->streaming_mode = CAM_STREAMING_MODE_BURST;
@@ -4694,6 +4698,7 @@ int32_t QCamera2HardwareInterface::addStreamToChannel(QCameraChannel *pChannel,
             streamType == CAM_STREAM_TYPE_METADATA ||
             streamType == CAM_STREAM_TYPE_RAW) &&
             !isZSLMode() &&
+            !mRawPreviewEnabled &&
             !isLongshotEnabled() &&
             !mParameters.getRecordingHintValue()) {
         rc = pChannel->addStream(*this,
@@ -4813,8 +4818,17 @@ int32_t QCamera2HardwareInterface::addPreviewChannel()
     }
 
     if (isNoDisplayMode()) {
-        rc = addStreamToChannel(pChannel, CAM_STREAM_TYPE_PREVIEW,
+        cam_format_t format;
+        mParameters.getStreamFormat(CAM_STREAM_TYPE_PREVIEW, format);
+        if( (format >= CAM_FORMAT_BAYER_MIPI_RAW_8BPP_GBRG) &&
+             (format <= CAM_FORMAT_BAYER_MIPI_RAW_12BPP_BGGR)) {
+            mRawPreviewEnabled = true;
+            rc = addStreamToChannel(pChannel, CAM_STREAM_TYPE_RAW,
+                    nodisplay_preview_raw_stream_cb_routine, this);
+        } else {
+            rc = addStreamToChannel(pChannel, CAM_STREAM_TYPE_PREVIEW,
                                 nodisplay_preview_stream_cb_routine, this);
+        }
     } else {
         rc = addStreamToChannel(pChannel, CAM_STREAM_TYPE_PREVIEW,
                                 preview_stream_cb_routine, this);

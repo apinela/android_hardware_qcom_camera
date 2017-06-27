@@ -1,4 +1,5 @@
-/* Copyright (c) 2012-2014,2016 The Linux Foundataion. All rights reserved.
+/* Copyright (c) 2012-2014,2016-2017 The Linux Foundataion. All rights
+ * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -490,6 +491,9 @@ private:
     static void nodisplay_preview_stream_cb_routine(mm_camera_super_buf_t *frame,
                                                     QCameraStream *stream,
                                                     void *userdata);
+    static void nodisplay_preview_raw_stream_cb_routine(mm_camera_super_buf_t *frame,
+                                                    QCameraStream *stream,
+                                                    void *userdata);
     static void preview_stream_cb_routine(mm_camera_super_buf_t *frame,
                                           QCameraStream *stream,
                                           void *userdata);
@@ -564,6 +568,7 @@ private:
     bool m_bPreviewStarted;             //flag indicates first preview frame callback is received
     bool m_bRecordStarted;             //flag indicates Recording is started for first time
 
+    bool mRawPreviewEnabled;
 
     // if auto focus is running, in other words, when auto_focus is called from service,
     // and beforeany focus callback/cancel_focus happens. This flag is not an indication
