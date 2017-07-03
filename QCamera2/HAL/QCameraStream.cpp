@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2016, The Linux Foundataion. All rights reserved.
+/* Copyright (c) 2012-2017, The Linux Foundataion. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
@@ -838,6 +838,7 @@ int32_t QCameraStream::bufDone(const void *opaque, bool isMetaData)
                 ALOGE("%s: Cannot find buf for opaque data = %p", __func__, opaque);
                 return BAD_INDEX;
             }
+#ifdef USE_MEDIA_EXTENSIONS
             camera_memory_t *video_mem = mStreamBatchBufs->getMemory(index, true);
             if (video_mem != NULL) {
                 media_metadata_buffer * packet =
@@ -851,6 +852,7 @@ int32_t QCameraStream::bufDone(const void *opaque, bool isMetaData)
                     ALOGE("%s : native handle not available", __func__);
                 }
             }
+#endif
         } else {
             index = mStreamBufs->getMatchBufIndex(opaque, isMetaData);
             lVideoMem = (QCameraVideoMemory *)mStreamBufs;

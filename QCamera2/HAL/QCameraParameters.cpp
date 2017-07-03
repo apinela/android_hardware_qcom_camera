@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2015, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2015,2017 The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -39,6 +39,8 @@
 #include <sys/sysinfo.h>
 #include "QCamera2HWI.h"
 #include "QCameraParameters.h"
+#include <glib.h>
+#include <glibconfig.h>
 
 #define PI 3.14159265
 #define ASPECT_TOLERANCE 0.001
@@ -446,7 +448,20 @@ const QCameraParameters::QCameraMap<cam_format_t>
     {PIXEL_FORMAT_YUV420SP_ADRENO, CAM_FORMAT_YUV_420_NV21_ADRENO},
     {PIXEL_FORMAT_YV12,            CAM_FORMAT_YUV_420_YV12},
     {PIXEL_FORMAT_NV12,            CAM_FORMAT_YUV_420_NV12},
-    {QC_PIXEL_FORMAT_NV12_VENUS,   CAM_FORMAT_YUV_420_NV12_VENUS}
+    {QC_PIXEL_FORMAT_NV12_VENUS,   CAM_FORMAT_YUV_420_NV12_VENUS},
+    {QC_PIXEL_FORMAT_BAYER_MIPI_RAW_8GBRG,       CAM_FORMAT_BAYER_MIPI_RAW_8BPP_GBRG},
+    {QC_PIXEL_FORMAT_BAYER_MIPI_RAW_8GRBG,       CAM_FORMAT_BAYER_MIPI_RAW_8BPP_GRBG},
+    {QC_PIXEL_FORMAT_BAYER_MIPI_RAW_8RGGB,       CAM_FORMAT_BAYER_MIPI_RAW_8BPP_RGGB},
+    {QC_PIXEL_FORMAT_BAYER_MIPI_RAW_8BGGR,       CAM_FORMAT_BAYER_MIPI_RAW_8BPP_BGGR},
+    {QC_PIXEL_FORMAT_BAYER_MIPI_RAW_10GBRG,      CAM_FORMAT_BAYER_MIPI_RAW_10BPP_GBRG},
+    {QC_PIXEL_FORMAT_BAYER_MIPI_RAW_10GRBG,      CAM_FORMAT_BAYER_MIPI_RAW_10BPP_GRBG},
+    {QC_PIXEL_FORMAT_BAYER_MIPI_RAW_10RGGB,      CAM_FORMAT_BAYER_MIPI_RAW_10BPP_RGGB},
+    {QC_PIXEL_FORMAT_BAYER_MIPI_RAW_10BGGR,      CAM_FORMAT_BAYER_MIPI_RAW_10BPP_BGGR},
+    {QC_PIXEL_FORMAT_BAYER_MIPI_RAW_12GBRG,      CAM_FORMAT_BAYER_MIPI_RAW_12BPP_GBRG},
+    {QC_PIXEL_FORMAT_BAYER_MIPI_RAW_12GRBG,      CAM_FORMAT_BAYER_MIPI_RAW_12BPP_GRBG},
+    {QC_PIXEL_FORMAT_BAYER_MIPI_RAW_12RGGB,      CAM_FORMAT_BAYER_MIPI_RAW_12BPP_RGGB},
+    {QC_PIXEL_FORMAT_BAYER_MIPI_RAW_12BGGR,      CAM_FORMAT_BAYER_MIPI_RAW_12BPP_BGGR},
+    {PIXEL_FORMAT_BAYER_RGGB,      CAM_FORMAT_BAYER_MIPI_RAW_10BPP_GBRG},
 };
 
 const QCameraParameters::QCameraMap<cam_format_t>
@@ -1609,6 +1624,12 @@ int32_t QCameraParameters::setPreviewFormat(const QCameraParameters& params)
 
         CameraParameters::setPreviewFormat(str);
         CDBG("%s: format %d\n", __func__, mPreviewFormat);
+
+        if (mPreviewFormat >= CAM_FORMAT_BAYER_MIPI_RAW_8BPP_GBRG &&
+            mPreviewFormat <= CAM_FORMAT_BAYER_MIPI_RAW_12BPP_BGGR) {
+            m_bNoDisplayMode = true;
+            set(KEY_QC_NO_DISPLAY_MODE, "1");
+        }
         return NO_ERROR;
     }
     ALOGE("Invalid preview format value: %s", (str == NULL) ? "NULL" : str);
@@ -3878,8 +3899,9 @@ int32_t QCameraParameters::setNoDisplayMode(const QCameraParameters& params)
         }
     } else {
         memset(prop, 0, sizeof(prop));
-        property_get("persist.camera.no-display", prop, "0");
+        property_get("persist.camera.no-display", prop, "1");
         m_bNoDisplayMode = atoi(prop);
+        set(KEY_QC_NO_DISPLAY_MODE, prop);
     }
     CDBG_HIGH("Param m_bNoDisplayMode = %d", m_bNoDisplayMode);
     return NO_ERROR;
@@ -5155,6 +5177,10 @@ int32_t QCameraParameters::initDefaultParameters()
         set(KEY_QC_LOW_POWER_MODE_SUPPORTED, VALUE_FALSE);
     }
     setLowPowerMode(VALUE_DISABLE);
+
+    // Set no display mode by default
+    set(KEY_QC_NO_DISPLAY_MODE, "1");
+    m_bNoDisplayMode = true;
 
     int32_t rc = commitParameters();
     if (rc == NO_ERROR) {

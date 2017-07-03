@@ -41,12 +41,12 @@ endif
 
 LOCAL_C_INCLUDES := \
         $(LOCAL_PATH)/../stack/common \
-        frameworks/native/include/media/openmax \
-        hardware/qcom/display/libgralloc \
-        hardware/qcom/display/libqdutils \
-        hardware/qcom/media/libstagefrighthw \
-        system/media/camera/include \
-        system/core/include/cutils \
+        $(WORKSPACE)/frameworks/native/include/media/openmax \
+        $(WORKSPACE)/display/display-hal/libgralloc \
+        $(WORKSPACE)/display/display-hal/libqdutils \
+        $(WORKSPACE)/display/display-hal/libqservice \
+        $(WORKSPACE)/hardware/qcom/media/libstagefrighthw \
+        $(WORKSPACE)/system/media/camera/include \
         $(LOCAL_PATH)/../../mm-image-codec/qexif \
         $(LOCAL_PATH)/../../mm-image-codec/qomx_core \
         $(LOCAL_PATH)/../util \
@@ -60,20 +60,23 @@ endif
 
 LOCAL_C_INCLUDES += \
         $(TARGET_OUT_HEADERS)/qcom/display
-LOCAL_C_INCLUDES += \
-        hardware/qcom/display/libqservice
 
 #ifeq ($(TARGET_USE_VENDOR_CAMERA_EXT),true)
 #LOCAL_C_INCLUDES += hardware/qcom/display/msm8974/libgralloc
 #else
-LOCAL_C_INCLUDES += hardware/qcom/display/libgralloc
+#LOCAL_C_INCLUDES += hardware/qcom/display/msm8909/libgralloc
 #endif
+
 LOCAL_C_INCLUDES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include
 LOCAL_C_INCLUDES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include/media
+
 ifeq ($(TARGET_TS_MAKEUP),true)
 LOCAL_CFLAGS += -DTARGET_TS_MAKEUP
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/tsMakeuplib/include
 endif
+
+LOCAL_COPY_HEADERS = ../../QCamera_Intf.h
+
 LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
 
 LOCAL_SHARED_LIBRARIES := libcamera_client liblog libhardware libutils libcutils libdl
@@ -92,5 +95,5 @@ LOCAL_MODULE_TAGS := optional
 include $(BUILD_SHARED_LIBRARY)
 
 ifeq ($(TARGET_USES_AOSP),false)
-include $(LOCAL_PATH)/test/Android.mk
+#include $(LOCAL_PATH)/test/Android.mk
 endif
