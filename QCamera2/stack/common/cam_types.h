@@ -405,6 +405,18 @@ typedef struct {
     float video_max_fps;
 } cam_fps_range_t;
 
+typedef struct{
+    struct {
+      cam_dimension_t dim;
+      int32_t frame_length_lines;
+      float max_fps;
+    } res_info[MAX_SIZES_CNT];
+    uint32_t res_num;
+    uint32_t frame_length_lines_offset;
+    uint32_t max_frame_length_lines;
+    float min_gain;
+    float max_gain;
+} cam_exposure_ctrl_info_t;
 
 typedef enum {
     CAM_HFR_MODE_OFF,
