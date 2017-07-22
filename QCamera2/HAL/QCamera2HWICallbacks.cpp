@@ -996,6 +996,18 @@ void QCamera2HardwareInterface::nodisplay_preview_stream_cb_routine(
         }
     }
 
+    if(pme->m_bPreviewStarted) {
+        CDBG_HIGH("[KPI Perf] %s : PROFILE_FIRST_PREVIEW_FRAME", __func__);
+        pme->m_bPreviewStarted = false;
+    }
+    ATRACE_INT("Preview:FrameIdx", frame->frame_idx);
+
+    nsecs_t timeStamp;
+    if (pme->mParameters.isAVTimerEnabled() == true)
+        timeStamp = (frame->ts.tv_sec * 1000000LL + frame->ts.tv_nsec) * 1000;
+    else
+        timeStamp = (frame->ts.tv_sec) * 1000000000LL + frame->ts.tv_nsec;
+
     QCameraMemory *previewMemObj = (QCameraMemory *)frame->mem_info;
     camera_memory_t *preview_mem = NULL;
     if (previewMemObj != NULL) {
@@ -1009,9 +1021,10 @@ void QCamera2HardwareInterface::nodisplay_preview_stream_cb_routine(
             pme->msgTypeEnabledWithLock(CAMERA_MSG_PREVIEW_FRAME) > 0 ) {
             qcamera_callback_argm_t cbArg;
             memset(&cbArg, 0, sizeof(qcamera_callback_argm_t));
-            cbArg.cb_type = QCAMERA_DATA_CALLBACK;
+            cbArg.cb_type = QCAMERA_DATA_TIMESTAMP_CALLBACK;
             cbArg.msg_type = CAMERA_MSG_PREVIEW_FRAME;
             cbArg.data = preview_mem;
+            cbArg.timestamp = timeStamp;
             cbArg.user_data = (void *) &frame->buf_idx;
             cbArg.cookie = stream;
             cbArg.release_cb = returnStreamBuffer;
@@ -1077,11 +1090,10 @@ void QCamera2HardwareInterface::nodisplay_preview_raw_stream_cb_routine(
     ATRACE_INT("Preview:FrameIdx", frame->frame_idx);
 
     nsecs_t timeStamp;
-    if(pme->mParameters.isAVTimerEnabled() == true) {
-        timeStamp = (nsecs_t)((frame->ts.tv_sec * 1000000LL) + frame->ts.tv_nsec) * 1000;
-    } else {
-        timeStamp = nsecs_t(frame->ts.tv_sec) * 1000000000LL + frame->ts.tv_nsec;
-    }
+    if (pme->mParameters.isAVTimerEnabled() == true)
+        timeStamp = (frame->ts.tv_sec * 1000000LL + frame->ts.tv_nsec) * 1000;
+    else
+        timeStamp = (frame->ts.tv_sec) * 1000000000LL + frame->ts.tv_nsec;
 
     QCameraMemory *previewMemObj = (QCameraMemory *)frame->mem_info;
     camera_memory_t *preview_mem = NULL;
@@ -2183,19 +2195,45 @@ void QCamera2HardwareInterface::debugShowVideoFPS()
  *==========================================================================*/
 void QCamera2HardwareInterface::debugShowPreviewFPS()
 {
+    ATRACE_CALL();
     static int n_pFrameCount = 0;
     static int n_pLastFrameCount = 0;
+    static nsecs_t n_pTotalFpsTime = 0;
     static nsecs_t n_pLastFpsTime = 0;
+    static nsecs_t n_pLastFrameTime = 0;
+    static nsecs_t n_pMaxFrameInterval = 0;
+    static double n_pFpsAll = 0;
     static double n_pFps = 0;
     n_pFrameCount++;
     nsecs_t now = systemTime();
     nsecs_t diff = now - n_pLastFpsTime;
-    if (diff > ms2ns(250)) {
-        n_pFps = (((double)(n_pFrameCount - n_pLastFrameCount)) *
-                (double)(s2ns(1))) / (double)diff;
-        CDBG_HIGH("[KPI Perf] %s: PROFILE_PREVIEW_FRAMES_PER_SECOND : %.4f", __func__, n_pFps);
+    nsecs_t intv = now - n_pLastFrameTime;
+
+    if (n_pFrameCount == 1) {
         n_pLastFpsTime = now;
-        n_pLastFrameCount = n_pFrameCount;
+        n_pLastFrameTime = now;
+    } else {
+        n_pLastFrameTime = now;
+        if (intv > n_pMaxFrameInterval) {
+            n_pMaxFrameInterval = intv;
+            ATRACE_INT64("Preview:MaxInterval", n_pMaxFrameInterval);
+        }
+
+        if (diff > ms2ns(250)) {
+            n_pFps = (((double)(n_pFrameCount - n_pLastFrameCount)) *
+                    (double)(s2ns(1))) / (double)diff;
+            CDBG_HIGH("[KPI Perf] %s: PROFILE_PREVIEW_FRAMES_PER_SECOND : %.4f",
+                     __func__, n_pFps);
+
+            n_pTotalFpsTime += diff;
+            n_pFpsAll = (((double)(n_pFrameCount - 1)) *
+                    (double)(s2ns(1))) / (double)n_pTotalFpsTime;
+            ATRACE_INT("Preview:FPS1", n_pFps*100);
+            ATRACE_INT("Preview:FPS2", n_pFpsAll*100);
+
+            n_pLastFpsTime = now;
+            n_pLastFrameCount = n_pFrameCount;
+        }
     }
 }
 

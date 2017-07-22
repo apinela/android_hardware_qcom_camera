@@ -78,6 +78,7 @@ const char QCameraParameters::KEY_QC_LENSSHADE[] = "lensshade";
 const char QCameraParameters::KEY_QC_SUPPORTED_LENSSHADE_MODES[] = "lensshade-values";
 const char QCameraParameters::KEY_QC_AUTO_EXPOSURE[] = "auto-exposure";
 const char QCameraParameters::KEY_QC_SUPPORTED_AUTO_EXPOSURE[] = "auto-exposure-values";
+const char QCameraParameters::KEY_QC_EXPOSURE_CTRL_INFO[] = "exposure-ctrl-info";
 const char QCameraParameters::KEY_QC_DENOISE[] = "denoise";
 const char QCameraParameters::KEY_QC_SUPPORTED_DENOISE[] = "denoise-values";
 const char QCameraParameters::KEY_QC_FOCUS_ALGO[] = "selectable-zone-af";
@@ -1214,6 +1215,59 @@ String8 QCameraParameters::createFpsRangeString(const cam_fps_range_t* fps,
         snprintf(buffer, sizeof(buffer), ",(%d,%d)", min_fps, max_fps);
         str.append(buffer);
     }
+    return str;
+}
+
+/*===========================================================================
+ * FUNCTION   : createExposureCtrlInfoString
+ *
+ * DESCRIPTION: create string obj contain miscellaneous expo ctrl info
+ *
+ * PARAMETERS :
+ *   @values  : array of expo ctrl info
+ *
+ * RETURN     : string obj
+ *==========================================================================*/
+String8 QCameraParameters::createExposureCtrlInfoString(
+                const cam_exposure_ctrl_info_t &values)
+{
+    String8 str;
+    char buffer[256];
+    int max_gain = int(values.max_gain * 256);
+    int min_gain = int(values.min_gain * 256);
+    int max_fps = 3000;
+
+    if (values.res_num > 0) {
+        max_fps = int(values.res_info[0].max_fps * 1000);
+        snprintf(buffer, sizeof(buffer),
+            "%dx%d,frame_length_lines:%d,max_fps:%d,",
+            values.res_info[0].dim.width,
+            values.res_info[0].dim.height,
+            values.res_info[0].frame_length_lines,
+            max_fps);
+        str.append(buffer);
+
+        for (size_t i = 1; i < values.res_num; i++) {
+            max_fps = int(values.res_info[i].max_fps * 1000);
+            snprintf(buffer, sizeof(buffer),
+                "%dx%d,frame_length_lines:%d,max_fps:%d,",
+                values.res_info[i].dim.width,
+                values.res_info[i].dim.height,
+                values.res_info[i].frame_length_lines,
+                max_fps);
+            str.append(buffer);
+        }
+
+        snprintf(buffer, sizeof(buffer),
+            "frame_length_lines_offset:%d,max_frame_length_lines:%d,"
+            "min_gain:%d,max_gain:%d",
+            values.frame_length_lines_offset,
+            values.max_frame_length_lines,
+            min_gain, max_gain);
+        str.append(buffer);
+    }
+
+    CDBG_HIGH("%s, exposure control info: %s", __func__, str.string());
     return str;
 }
 
@@ -4937,6 +4991,11 @@ int32_t QCameraParameters::initDefaultParameters()
             m_pCapability->hfr_tbl_cnt);
     set(KEY_QC_SUPPORTED_HFR_SIZES, hfrSizeValues.string());
     setHighFrameRate(CAM_HFR_MODE_OFF);
+
+    // Set exposure control info
+    String8 exposureCtrlInfoValues = createExposureCtrlInfoString(
+            m_pCapability->exposure_ctrl_info);
+    set(KEY_QC_EXPOSURE_CTRL_INFO, exposureCtrlInfoValues.string());
 
     // Set Focus algorithms
     String8 focusAlgoValues = createValuesString(
