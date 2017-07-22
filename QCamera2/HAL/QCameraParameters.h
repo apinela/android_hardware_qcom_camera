@@ -168,6 +168,11 @@ public:
     static const char KEY_QC_AUTO_EXPOSURE[];
     static const char KEY_QC_SUPPORTED_AUTO_EXPOSURE[];
 
+    // Contains misc. exposure control info in the form:
+    // "%dx%d,frame_length_lines:%d,max_fps:%d,%dx%d,...,"
+    // "frame_length_lines_offset:%d,max_frame_length_lines:%d,min_gain:%d,max_gain:%d"
+    static const char KEY_QC_EXPOSURE_CTRL_INFO[];
+
     static const char KEY_QC_GPS_LATITUDE_REF[];
     static const char KEY_QC_GPS_LONGITUDE_REF[];
     static const char KEY_QC_GPS_ALTITUDE_REF[];
@@ -903,6 +908,7 @@ private:
     String8 createFpsRangeString(const cam_fps_range_t *fps,
             size_t len, int &default_fps_index);
     String8 createFpsString(cam_fps_range_t &fps);
+    String8 createExposureCtrlInfoString(const cam_exposure_ctrl_info_t &values);
     String8 createZoomRatioValuesString(uint32_t *zoomRatios, size_t length);
 
     // ops for batch set/get params with server

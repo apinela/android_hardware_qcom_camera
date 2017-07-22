@@ -102,6 +102,9 @@ typedef struct{
     size_t fps_ranges_tbl_cnt;                              /* fps ranges table size */
     cam_fps_range_t fps_ranges_tbl[MAX_SIZES_CNT];          /* fps ranges table */
 
+    /* miscellaneous exposure control info */
+    cam_exposure_ctrl_info_t exposure_ctrl_info;
+
     /* supported antibanding modes */
     size_t supported_antibandings_cnt;
     cam_antibanding_mode_type supported_antibandings[CAM_ANTIBANDING_MODE_MAX];
