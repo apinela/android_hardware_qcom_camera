@@ -1002,6 +1002,12 @@ void QCamera2HardwareInterface::nodisplay_preview_stream_cb_routine(
     }
     ATRACE_INT("Preview:FrameIdx", frame->frame_idx);
 
+    nsecs_t timeStamp;
+    if (pme->mParameters.isAVTimerEnabled() == true)
+        timeStamp = (frame->ts.tv_sec * 1000000LL + frame->ts.tv_nsec) * 1000;
+    else
+        timeStamp = (frame->ts.tv_sec) * 1000000000LL + frame->ts.tv_nsec;
+
     QCameraMemory *previewMemObj = (QCameraMemory *)frame->mem_info;
     camera_memory_t *preview_mem = NULL;
     if (previewMemObj != NULL) {
@@ -1015,9 +1021,10 @@ void QCamera2HardwareInterface::nodisplay_preview_stream_cb_routine(
             pme->msgTypeEnabledWithLock(CAMERA_MSG_PREVIEW_FRAME) > 0 ) {
             qcamera_callback_argm_t cbArg;
             memset(&cbArg, 0, sizeof(qcamera_callback_argm_t));
-            cbArg.cb_type = QCAMERA_DATA_CALLBACK;
+            cbArg.cb_type = QCAMERA_DATA_TIMESTAMP_CALLBACK;
             cbArg.msg_type = CAMERA_MSG_PREVIEW_FRAME;
             cbArg.data = preview_mem;
+            cbArg.timestamp = timeStamp;
             cbArg.user_data = (void *) &frame->buf_idx;
             cbArg.cookie = stream;
             cbArg.release_cb = returnStreamBuffer;
@@ -1083,11 +1090,10 @@ void QCamera2HardwareInterface::nodisplay_preview_raw_stream_cb_routine(
     ATRACE_INT("Preview:FrameIdx", frame->frame_idx);
 
     nsecs_t timeStamp;
-    if(pme->mParameters.isAVTimerEnabled() == true) {
-        timeStamp = (nsecs_t)((frame->ts.tv_sec * 1000000LL) + frame->ts.tv_nsec) * 1000;
-    } else {
-        timeStamp = nsecs_t(frame->ts.tv_sec) * 1000000000LL + frame->ts.tv_nsec;
-    }
+    if (pme->mParameters.isAVTimerEnabled() == true)
+        timeStamp = (frame->ts.tv_sec * 1000000LL + frame->ts.tv_nsec) * 1000;
+    else
+        timeStamp = (frame->ts.tv_sec) * 1000000000LL + frame->ts.tv_nsec;
 
     QCameraMemory *previewMemObj = (QCameraMemory *)frame->mem_info;
     camera_memory_t *preview_mem = NULL;
