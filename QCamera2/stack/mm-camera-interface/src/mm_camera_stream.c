@@ -44,6 +44,9 @@
 #include "mm_camera_interface.h"
 #include "mm_camera.h"
 
+#include "cutils/trace.h"
+#define ATRACE_TAG ATRACE_TAG_CAMERA
+
 /* internal function decalre */
 int32_t mm_stream_qbuf(mm_stream_t *my_obj,
                        mm_camera_buf_def_t *buf);
@@ -1090,6 +1093,8 @@ int32_t mm_stream_read_msm_frame(mm_stream_t * my_obj,
         CDBG_HIGH("%s: VIDIOC_DQBUF buf_index %d, frame_idx %d, stream type %d, queued cnt %d\n",
                    __func__, vb.index, buf_info->buf->frame_idx,
                    my_obj->stream_info->stream_type,my_obj->queued_buffer_count);
+        ATRACE_INT("Camera:DQBUF:Stream", my_obj->stream_info->stream_type);
+        ATRACE_INT("Camera:DQBUF:FrameIdx", buf_info->buf->frame_idx);
         pthread_mutex_unlock(&my_obj->buf_lock);
         if ( NULL != my_obj->mem_vtbl.clean_invalidate_buf ) {
             rc = my_obj->mem_vtbl.clean_invalidate_buf(idx,
