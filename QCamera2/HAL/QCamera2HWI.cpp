@@ -6468,7 +6468,7 @@ bool QCamera2HardwareInterface::isPreviewRestartEnabled()
 {
     char prop[PROPERTY_VALUE_MAX];
     memset(prop, 0, sizeof(prop));
-    property_get("persist.camera.feature.restart", prop, "0");
+    property_get("persist.camera.feature.restart", prop, "1");
     int earlyRestart = atoi(prop);
     return earlyRestart == 1;
 }
