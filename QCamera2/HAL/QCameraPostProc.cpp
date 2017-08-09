@@ -718,6 +718,9 @@ int32_t QCameraPostProcessor::processData(mm_camera_super_buf_t *frame)
         //play shutter sound
         m_parent->playShutter();
 
+        //stop capture and check whether need restart preview
+        stopCapture();
+
         CDBG_HIGH("%s: no need offline reprocess, sending to jpeg encoding", __func__);
         qcamera_jpeg_data_t *jpeg_job =
             (qcamera_jpeg_data_t *)malloc(sizeof(qcamera_jpeg_data_t));
