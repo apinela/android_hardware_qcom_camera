@@ -4957,7 +4957,7 @@ int32_t QCameraParameters::initDefaultParameters()
     }
     CDBG_HIGH("%s, Exposure time min %lf ms, max %lf ms", __func__,
         min_exp_time, max_exp_time);
-    //setExposureTime("0");
+    setExposureTime("0");
 
     // Set iso
     set(KEY_QC_MIN_ISO, m_pCapability->min_iso);
