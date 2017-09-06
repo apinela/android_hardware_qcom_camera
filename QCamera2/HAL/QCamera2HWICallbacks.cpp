@@ -2488,7 +2488,9 @@ void * QCameraCbNotifier::cbNotifyRoutine(void * data)
                         cbStatus = INVALID_OPERATION;
                     }
                     if ( cb->release_cb ) {
-                        cb->release_cb(cb->user_data, cb->cookie, cbStatus);
+                        if ( !(cb->msg_type == CAMERA_MSG_PREVIEW_FRAME &&
+                            !pme->mParent->m_stateMachine.isPreviewRunning()) )
+                            cb->release_cb(cb->user_data, cb->cookie, cbStatus);
                     }
                     delete cb;
                 } else {
