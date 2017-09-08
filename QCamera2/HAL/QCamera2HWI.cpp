@@ -56,6 +56,7 @@
 #define CAMERA_MIN_JPEG_ENCODING_BUFFERS 2
 #define CAMERA_MIN_VIDEO_BUFFERS         9
 #define CAMERA_ISP_PING_PONG_BUFFERS     2
+#define EXTRA_PREVIEW_STREAM_BUF         5
 #define EXTRA_RAW_PREVIEW_STREAM_BUF     5
 
 #define HDR_CONFIDENCE_THRESHOLD 0.4
@@ -1601,7 +1602,8 @@ uint8_t QCamera2HardwareInterface::getBufNumRequired(cam_stream_type_t stream_ty
             } else {
                 bufferCnt = CAMERA_MIN_STREAMING_BUFFERS +
                         mParameters.getMaxUnmatchedFramesInQueue() +
-                        mParameters.getNumOfExtraBuffersForPreview();
+                        mParameters.getNumOfExtraBuffersForPreview() +
+                        EXTRA_PREVIEW_STREAM_BUF;
             }
             bufferCnt += minUndequeCount;
         }
