@@ -1,8 +1,10 @@
-ifeq ($(call is-vendor-board-platform,QCOM),true)
 OLD_LOCAL_PATH := $(LOCAL_PATH)
 LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
+
+LOCAL_CLANG_CFLAGS += \
+        -Wno-error=pointer-bool-conversion 
 
 MM_CAM_FILES := \
         src/mm_camera_interface.c \
@@ -17,7 +19,7 @@ ifeq ($(strip $(TARGET_USES_ION)),true)
     LOCAL_CFLAGS += -DUSE_ION
 endif
 
-ifeq ($(call is-board-platform-in-list,msm8974 msm8916 msm8226 msm8610),true)
+ifneq ($(filter msm8226 msm8610 msm8974,$(TARGET_BOARD_PLATFORM)),)
     LOCAL_CFLAGS += -DVENUS_PRESENT
 endif
 
@@ -38,7 +40,7 @@ LOCAL_C_INCLUDES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include
 LOCAL_C_INCLUDES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include/media
 LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
 
-LOCAL_C_INCLUDES += hardware/qcom/media-caf/msm8974/mm-core/inc
+LOCAL_C_INCLUDES += hardware/qcom/media/msm8974/mm-core/inc
 ifeq ($(call is-platform-sdk-version-at-least,20),true)
 LOCAL_C_INCLUDES += system/media/camera/include
 endif
@@ -59,4 +61,3 @@ LOCAL_MODULE_TAGS := optional
 include $(BUILD_SHARED_LIBRARY)
 
 LOCAL_PATH := $(OLD_LOCAL_PATH)
-endif

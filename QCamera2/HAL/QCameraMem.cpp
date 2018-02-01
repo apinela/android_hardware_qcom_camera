@@ -398,7 +398,7 @@ int QCameraMemory::allocOneBuffer(QCameraMemInfo &memInfo,
     if (cached) {
         alloc.flags = ION_FLAG_CACHED;
     }
-    alloc.heap_mask = heap_id;
+    alloc.heap_id_mask = heap_id;
     rc = ioctl(main_ion_fd, ION_IOC_ALLOC, &alloc);
     if (rc < 0) {
         ALOGE("ION allocation failed: %s\n", strerror(errno));
@@ -689,7 +689,7 @@ int QCameraHeapMemory::allocate(uint8_t count, size_t size)
     int rc = alloc(count, size, heap_mask);
     if (rc < 0)
         return rc;
-
+ALOGE("apinela:aqui");
     for (int i = 0; i < count; i ++) {
         void *vaddr = mmap(NULL,
                     mMemInfo[i].size,
@@ -869,11 +869,13 @@ int QCameraHeapMemory::getMatchBufIndex(const void *opaque,
  * RETURN     : none
  *==========================================================================*/
 QCameraStreamMemory::QCameraStreamMemory(camera_request_memory getMemory,
+        void *user,
         bool cached,
         QCameraMemoryPool *pool,
         cam_stream_type_t streamType)
     :QCameraMemory(cached, pool, streamType),
-     mGetMemory(getMemory)
+     mGetMemory(getMemory),
+     mCallbackCookie(user)
 {
     for (int i = 0; i < MM_CAMERA_MAX_NUM_FRAMES; i ++)
         mCameraMemory[i] = NULL;
@@ -914,7 +916,7 @@ int QCameraStreamMemory::allocate(uint8_t count, size_t size)
         return rc;
 
     for (int i = 0; i < count; i ++) {
-        mCameraMemory[i] = mGetMemory(mMemInfo[i].fd, mMemInfo[i].size, 1, this);
+        mCameraMemory[i] = mGetMemory(mMemInfo[i].fd, mMemInfo[i].size, 1, mCallbackCookie);
     }
     mBufferCount = count;
     traceLogAllocEnd((size * count));
@@ -943,7 +945,7 @@ int QCameraStreamMemory::allocateMore(uint8_t count, size_t size)
         return rc;
 
     for (int i = mBufferCount; i < mBufferCount + count; i++) {
-        mCameraMemory[i] = mGetMemory(mMemInfo[i].fd, mMemInfo[i].size, 1, this);
+        mCameraMemory[i] = mGetMemory(mMemInfo[i].fd, mMemInfo[i].size, 1, mCallbackCookie);
     }
     mBufferCount = (uint8_t)(mBufferCount + count);
     traceLogAllocEnd((size * count));
@@ -1088,8 +1090,8 @@ void *QCameraStreamMemory::getPtr(uint32_t index) const
  * RETURN     : none
  *==========================================================================*/
 QCameraVideoMemory::QCameraVideoMemory(camera_request_memory getMemory,
-                                       bool cached)
-    : QCameraStreamMemory(getMemory, cached)
+                                       void *user, bool cached)
+    : QCameraStreamMemory(getMemory, user, cached)
 {
     memset(mMetadata, 0, sizeof(mMetadata));
 }
@@ -1129,7 +1131,7 @@ int QCameraVideoMemory::allocate(uint8_t count, size_t size)
 
     for (int i = 0; i < count; i ++) {
         mMetadata[i] = mGetMemory(-1,
-                sizeof(struct encoder_media_buffer_type), 1, this);
+                sizeof(struct encoder_media_buffer_type), 1, mCallbackCookie);
         if (!mMetadata[i]) {
             ALOGE("allocation of video metadata failed.");
             for (int j = 0; j <= i-1; j ++)
@@ -1173,7 +1175,7 @@ int QCameraVideoMemory::allocateMore(uint8_t count, size_t size)
 
     for (int i = mBufferCount; i < count + mBufferCount; i ++) {
         mMetadata[i] = mGetMemory(-1,
-                sizeof(struct encoder_media_buffer_type), 1, this);
+                sizeof(struct encoder_media_buffer_type), 1, mCallbackCookie);
         if (!mMetadata[i]) {
             ALOGE("allocation of video metadata failed.");
             for (int j = mBufferCount; j <= i-1; j ++) {
@@ -1299,7 +1301,7 @@ int QCameraVideoMemory::getMatchBufIndex(const void *opaque,
  *
  * RETURN     : none
  *==========================================================================*/
-QCameraGrallocMemory::QCameraGrallocMemory(camera_request_memory getMemory)
+QCameraGrallocMemory::QCameraGrallocMemory(camera_request_memory getMemory, void *user)
         : QCameraMemory(true)
 {
     mMinUndequeuedBuffers = 0;
@@ -1567,7 +1569,7 @@ int QCameraGrallocMemory::allocate(uint8_t count, size_t /*size*/)
             mGetMemory(mPrivateHandle[cnt]->fd,
                     (size_t)mPrivateHandle[cnt]->size,
                     1,
-                    (void *)this);
+                    mCallbackCookie);
         CDBG("%s: idx = %d, fd = %d, size = %d, offset = %d",
               __func__, cnt, mPrivateHandle[cnt]->fd,
               mPrivateHandle[cnt]->size,
